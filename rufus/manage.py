@@ -17,7 +17,7 @@ from docopt import docopt
 import donkeycar as dk
 
 #import parts
-from donkeycar.parts.camera import PiCamera, Webcam, MockCamera
+from donkeycar.parts.camera import PiCamera, MockCamera
 from donkeycar.parts.transform import Lambda
 from donkeycar.parts.keras import KerasCategorical
 from donkeycar.parts.actuator import PCA9685, PWMSteering, PWMThrottle
