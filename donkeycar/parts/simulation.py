@@ -21,6 +21,22 @@ from io import BytesIO
 import time
 
 
+import os
+"""
+    Method to test if you can import correct donkeycar package - see working dir of package that gets
+    used when you import donkeycar, change the string that prints to be extra extra sure you're using correct library
+
+    (Make sure you `source activate donkey`)
+
+    $>python
+    >>> from donkeycar.parts.simulation import ImportTest
+    >>> IT = ImportTest()
+"""
+class ImportTest():
+    def __init__(self):
+        print("Using library: " + os.getcwd() + " verification key (change me): " + "RUFUS72")
+
+
 class FPSTimer(object):
     def __init__(self):
         self.t = time.time()

@@ -12,3 +12,7 @@ lag_log.csv
 site/*
 build
 .idea
+
+# Donkeycar specific
+
+rufus/data/*

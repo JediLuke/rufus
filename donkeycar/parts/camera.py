@@ -119,7 +119,8 @@ class MockCamera(BaseCamera):
         if image is not None:
             self.frame = image
         else:
-            self.frame = Image.new('RGB', resolution)
+            #self.frame = Image.new('RGB', resolution)
+            self.frame = np.asarray(Image.open("/Users/luke/workbench/donkeycar/rufus/rufus/data/chessboard.jpg"))
 
     def update(self):
         pass
