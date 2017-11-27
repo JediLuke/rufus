@@ -23,7 +23,7 @@ from donkeycar.parts.keras import KerasCategorical
 from donkeycar.parts.actuator import PCA9685, PWMSteering, PWMThrottle
 from donkeycar.parts.datastore import TubHandler, TubGroup
 from donkeycar.parts.controller import LocalWebController, JoystickController
-from donkeycar.parts.cv import ImgGreyscale, ImgCrop, AdaptiveThreshold, ImgGaussianBlur, DrawLine, BirdsEyePerspectiveTxfrm
+from donkeycar.parts.cv import ImgGreyscale, ImgCrop, AdaptiveThreshold, ImgGaussianBlur, DrawLine
 from donkeycar.parts.simulation import SquareBoxCamera
 
 def drive(cfg, model_path=None, use_joystick=False):
@@ -51,6 +51,7 @@ def drive(cfg, model_path=None, use_joystick=False):
 
     #Greyscale filter
     #V.add(ImgGreyscale(), inputs=['cam/image_array'], outputs=['cam/filtered_final'])
+    #V.add(ImgGreyscale(), inputs=['cam/image_array'], outputs=['cam/greyscale'])
 
     #Gaussian blur
     #V.add(ImgGaussianBlur(), inputs=['cam/filtered2'], outputs=['cam/filtered3'])
@@ -59,10 +60,10 @@ def drive(cfg, model_path=None, use_joystick=False):
     #V.add(AdaptiveThreshold(), inputs=['cam/filtered3'], outputs=['cam/filtered4'])
 
     #Birds eye viewpoint transformation
-    #V.add(BirdsEyePerspectiveTxfrm(), inputs=['cam/dotted'], outputs=['cam/filtered_final'])
+    #V.add(BirdsEyePerspectiveTxfrm(), inputs=['cam/image_array'], outputs=['cam/birdseye_txfrm'])
 
-    #Draw line
-    #V.add(DrawLine((0, 200), (480, 200)), inputs=['cam/filtered4'], outputs=['cam/filtered_final'])
+    #Draw line      ->, down
+    #V.add(DrawLine((20, 50), (150, 110)), inputs=['cam/image_array'], outputs=['cam/draw_line'])
 
     #Controller
     if use_joystick or cfg.USE_JOYSTICK_AS_DEFAULT:
@@ -98,8 +99,8 @@ def drive(cfg, model_path=None, use_joystick=False):
         kl.load(model_path)
     
     V.add(kl, inputs=['cam/image_array'], 
-          outputs=['pilot/angle', 'pilot/throttle'],
-          run_condition='run_pilot')
+              outputs=['pilot/angle', 'pilot/throttle'],
+              run_condition='run_pilot')
     
     
     #Choose what inputs should change the car.
