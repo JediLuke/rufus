@@ -19,6 +19,7 @@ import donkeycar as dk
 #import parts
 from donkeycar.parts.camera import PiCamera, MockCamera
 from donkeycar.parts.transform import Lambda
+from donkeycar.parts.lidar import Ultrasonic
 from donkeycar.parts.keras import KerasCategorical
 from donkeycar.parts.actuator import PCA9685, PWMSteering, PWMThrottle
 from donkeycar.parts.datastore import TubHandler, TubGroup
@@ -44,6 +45,20 @@ def drive(cfg, model_path=None, use_joystick=False):
     #cam = MockCamera(resolution=cfg.CAMERA_RESOLUTION)
     cam = PiCamera(resolution=cfg.CAMERA_RESOLUTION)
     V.add(cam, outputs=['cam/image_array'], threaded=True)
+
+    ultrasonic = Ultrasonic()
+    V.add(ultrasonic, outputs=['ultrasonic/dist'], threaded=True)
+
+    #This function takes input from sensor and decides whether or not to cut the drive
+    def drive_condition(dist):
+        if dist <= 20:
+            return False
+        else:
+            return True
+        
+    # Use distance sensor to cut engine
+    drive_condition_part = Lambda(drive_condition)
+    V.add(drive_condition_part, inputs=['ultrasonic/dist'], outputs=['run_drive']) # The boolean output here 'run_drive' is used as run_condition for PWNThrottle
 
 
     # Cropper - ImgCrop works by cropping num pixels in from side of each border - top, bottom, left, right
@@ -136,7 +151,7 @@ def drive(cfg, model_path=None, use_joystick=False):
                                     min_pulse=cfg.THROTTLE_REVERSE_PWM)
     
     V.add(steering, inputs=['angle'])
-    V.add(throttle, inputs=['throttle'])
+    V.add(throttle, inputs=['throttle'], run_condition='run_drive')
     
     #add tub to save data
     inputs=['cam/image_array', 'user/angle', 'user/throttle', 'user/mode']
