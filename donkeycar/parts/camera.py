@@ -121,7 +121,6 @@ class MockCamera(BaseCamera):
         else:
             #self.frame = Image.new('RGB', resolution)
             self.frame = np.asarray(Image.open("/home/pi/rufus/rufus/data/chessboard.jpg"))
-
     def update(self):
         pass
 

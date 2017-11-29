@@ -5,12 +5,17 @@ import numpy as np
 class BirdsEyePerspectiveTxfrm():
     #http://www.coldvision.io/2017/03/02/advanced-lane-finding-using-opencv/
     def compute_perspective_transform(self, binary_image):
-        # Define 4 source and 4 destination points = np.float32([[,],[,],[,],[,]])
+        # Get input image dimensions
         shape = binary_image.shape[::-1] # (width,height)
         w = shape[0]
         h = shape[1]
-        transform_src = np.float32([ [580,450], [160,h], [1150,h], [740,450]])
-        transform_dst = np.float32([ [0,0], [0,h], [w,h], [w,0]])
+        # print("w: " + str(w) + " h: " + str(h)) # w: 160 h: 120
+
+        # We take the input image as a trapezoid (i.e. it has perspective) and project/transform it into a square shape (i.e. flat)
+        # The 4 points that select quadilateral on the input , from top-left in clockwise order
+        transform_src = np.float32([ [int(w/5),int(4*h/10)], [int(5*w/6),int(4*h/10)], [w,h], [0,h] ])
+        #transform_src = np.float32([ [-100,-100], [w+100,-100], [w+100,h+100], [-100,h+100] ])
+        transform_dst = np.float32([ [0,h],        [w,h],         [w,h], [0,h] ])
         M = cv2.getPerspectiveTransform(transform_src, transform_dst)
         return M
 

@@ -19,11 +19,12 @@ import donkeycar as dk
 #import parts
 from donkeycar.parts.camera import PiCamera, MockCamera
 from donkeycar.parts.transform import Lambda
+from donkeycar.parts.lidar import Ultrasonic
 from donkeycar.parts.keras import KerasCategorical
 from donkeycar.parts.actuator import PCA9685, PWMSteering, PWMThrottle
 from donkeycar.parts.datastore import TubHandler, TubGroup
 from donkeycar.parts.controller import LocalWebController, JoystickController
-from donkeycar.parts.cv import ImgGreyscale, ImgCrop, AdaptiveThreshold, ImgGaussianBlur, DrawLine, BirdsEyePerspectiveTxfrm
+from donkeycar.parts.cv import ImgGreyscale, ImgCrop, AdaptiveThreshold, ImgGaussianBlur, DrawLine
 from donkeycar.parts.simulation import SquareBoxCamera
 
 def drive(cfg, model_path=None, use_joystick=False):
@@ -45,12 +46,27 @@ def drive(cfg, model_path=None, use_joystick=False):
     cam = PiCamera(resolution=cfg.CAMERA_RESOLUTION)
     V.add(cam, outputs=['cam/image_array'], threaded=True)
 
+    ultrasonic = Ultrasonic()
+    V.add(ultrasonic, outputs=['ultrasonic/dist'], threaded=True)
+
+    #This function takes input from sensor and decides whether or not to cut the drive
+    def drive_condition(dist):
+        if dist <= 20:
+            return False
+        else:
+            return True
+        
+    # Use distance sensor to cut engine
+    drive_condition_part = Lambda(drive_condition)
+    V.add(drive_condition_part, inputs=['ultrasonic/dist'], outputs=['run_drive']) # The boolean output here 'run_drive' is used as run_condition for PWNThrottle
+
 
     # Cropper - ImgCrop works by cropping num pixels in from side of each border - top, bottom, left, right
     #V.add(ImgCrop(200, 80, 0, 0), inputs=['cam/image_array'], outputs=['cam/filtered1'])
 
     #Greyscale filter
     #V.add(ImgGreyscale(), inputs=['cam/image_array'], outputs=['cam/filtered_final'])
+    #V.add(ImgGreyscale(), inputs=['cam/image_array'], outputs=['cam/greyscale'])
 
     #Gaussian blur
     #V.add(ImgGaussianBlur(), inputs=['cam/filtered2'], outputs=['cam/filtered3'])
@@ -59,10 +75,10 @@ def drive(cfg, model_path=None, use_joystick=False):
     #V.add(AdaptiveThreshold(), inputs=['cam/filtered3'], outputs=['cam/filtered4'])
 
     #Birds eye viewpoint transformation
-    #V.add(BirdsEyePerspectiveTxfrm(), inputs=['cam/dotted'], outputs=['cam/filtered_final'])
+    #V.add(BirdsEyePerspectiveTxfrm(), inputs=['cam/image_array'], outputs=['cam/birdseye_txfrm'])
 
-    #Draw line
-    #V.add(DrawLine((0, 200), (480, 200)), inputs=['cam/filtered4'], outputs=['cam/filtered_final'])
+    #Draw line      ->, down
+    #V.add(DrawLine((20, 50), (150, 110)), inputs=['cam/image_array'], outputs=['cam/draw_line'])
 
     #Controller
     if use_joystick or cfg.USE_JOYSTICK_AS_DEFAULT:
@@ -98,8 +114,8 @@ def drive(cfg, model_path=None, use_joystick=False):
         kl.load(model_path)
     
     V.add(kl, inputs=['cam/image_array'], 
-          outputs=['pilot/angle', 'pilot/throttle'],
-          run_condition='run_pilot')
+              outputs=['pilot/angle', 'pilot/throttle'],
+              run_condition='run_pilot')
     
     
     #Choose what inputs should change the car.
@@ -135,7 +151,7 @@ def drive(cfg, model_path=None, use_joystick=False):
                                     min_pulse=cfg.THROTTLE_REVERSE_PWM)
     
     V.add(steering, inputs=['angle'])
-    V.add(throttle, inputs=['throttle'])
+    V.add(throttle, inputs=['throttle'], run_condition='run_drive')
     
     #add tub to save data
     inputs=['cam/image_array', 'user/angle', 'user/throttle', 'user/mode']

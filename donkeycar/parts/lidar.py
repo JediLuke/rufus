@@ -6,6 +6,20 @@ import time
 import numpy as np
 
 
+class Ultrasonic():
+    def __init__(self):
+        # self.sensor = someThing()
+        self.dist = 1000
+
+    def run_threaded(self):
+        return self.dist
+
+    def update(self):
+        #self.dist = self.sensor.getReading()
+        print("uSonic dist " + str(self.dist))
+        self.dist = self.dist - 10
+
+
 class RPLidar():
     def __init__(self, port='/dev/ttyUSB0'):
         from rplidar import RPLidar
