@@ -149,9 +149,19 @@ def drive(cfg, model_path=None, use_joystick=False):
                                     max_pulse=cfg.THROTTLE_FORWARD_PWM,
                                     zero_pulse=cfg.THROTTLE_STOPPED_PWM, 
                                     min_pulse=cfg.THROTTLE_REVERSE_PWM)
+
+    #If run_drive is false set throttle to zero, otherwise pass the value through
+    def cut_throttle(run_drive=True, throttle=0):
+        if run_drive:
+            return throttle
+        else:
+            return 0
+    
+    throttle_control = Lambda(cut_throttle)
+    V.add(throttle_control, inputs=['run_drive', 'throttle'], outputs=['final_throttle'])
     
     V.add(steering, inputs=['angle'])
-    V.add(throttle, inputs=['throttle'], run_condition='run_drive')
+    V.add(throttle, inputs=['final_throttle'])
     
     #add tub to save data
     inputs=['cam/image_array', 'user/angle', 'user/throttle', 'user/mode']
